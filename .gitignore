@@ -1,0 +1,31 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment variables / secrets
+.env
+
+# Raw data: do not upload patient-level or analysis data
+merged_variant_data_78_a.csv
+data/
+*.csv
+!data_dictionary.csv
+
+# Generated output folders and files
+train_features*/
+*_results*/
+example_outputs/*
+!example_outputs/.gitkeep
+*.png
+*.pdf
+*.log
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
