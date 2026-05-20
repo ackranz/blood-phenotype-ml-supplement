@@ -8,7 +8,6 @@
 # - Canonical Dietterich test is 5x2cv paired t-test.
 # - Canonical Alpaydin test is combined 5x2cv F-test.
 # - This script implements a grouped repeated-k-fold analogue for 5x3
-#   because your requested design is 5 seeds x 3 folds.
 
 import os
 import json
