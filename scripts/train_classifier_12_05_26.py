@@ -26,6 +26,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from openai import OpenAI
+from pathlib import Path
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import Pipeline as ImbPipeline
 
@@ -84,10 +85,10 @@ def collapse_phenotype(phenotype: str) -> str:
 # GLOBAL CONFIG
 # ======================================================
 USE_GPT = False
-file_path = "merged_variant_data_78_a.csv"
+file_path = "../merged_variant_data_78_a.csv"
 
 TASKS_TO_RUN = [
-    # "CTRLV_VS_AG",
+    "CTRLV_VS_AG",
     "CTRLV_VS_NULLV",
 ]
 
@@ -96,7 +97,7 @@ OUTER_SEEDS = [11, 22, 33, 44, 55]  # 5 repeats / seeds
 INNER_N_SPLITS = 2
 INNER_SEED = 42
 
-BASE_OUTPUT_ROOT = f"train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_008"
+BASE_OUTPUT_ROOT = f"example_outputs/train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_010"
 os.makedirs(BASE_OUTPUT_ROOT, exist_ok=True)
 
 # ======================================================
@@ -1299,8 +1300,14 @@ def run_task(TASK):
     # ======================================================
     # POST-HOC VISUALISATIONS
     # ======================================================
-    subprocess.run([sys.executable, "feature_importance_visualization_a.py", output_dir], check=True)
-    subprocess.run([sys.executable, "boxplot_visualisations_with_stat_sign_a.py", output_dir], check=True)
+    scripts_dir = Path(__file__).resolve().parent
+    subprocess.run([sys.executable, scripts_dir / "feature_importance_visualization_a.py", output_dir], check=True)
+    boxplot_script = scripts_dir / "boxplot_visualisations_with_stat_sign_a.py"
+
+    subprocess.run(
+        [sys.executable, str(boxplot_script), str(output_dir)],
+        check=True
+    )
 
 
 if __name__ == "__main__":
