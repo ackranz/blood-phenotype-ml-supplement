@@ -1168,7 +1168,7 @@ def run_task(TASK):
     gb_imp_df = pd.DataFrame({"Feature": features, "Importance": gb_importances}).sort_values("Importance",
                                                                                               ascending=False)
     gb_imp_df.to_csv(os.path.join(output_dir, "feature_importance_gb.csv"), index=False)
-    """
+
     expl_gb = shap.TreeExplainer(gb_model)
     sv_gb = expl_gb.shap_values(X_gb_proc)
     sv_list_gb = sv_gb if isinstance(sv_gb, list) else [sv_gb]
@@ -1187,7 +1187,7 @@ def run_task(TASK):
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "shap_gb_beeswarm.png"), dpi=300)
     plt.close()
-"""
+
     # --- Logistic Regression ---
     lr_pipe = classifiers["Logistic Regression"]
     lr_grid = param_grids["Logistic Regression"]

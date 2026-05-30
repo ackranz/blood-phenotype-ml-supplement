@@ -95,7 +95,7 @@ OUTER_SEEDS = [11, 22, 33, 44, 55]  # 5 repeats / seeds
 INNER_N_SPLITS = 2
 INNER_SEED = 42
 
-BASE_OUTPUT_ROOT = f"train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_008"
+BASE_OUTPUT_ROOT = f"train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_010"
 os.makedirs(BASE_OUTPUT_ROOT, exist_ok=True)
 
 # ======================================================
