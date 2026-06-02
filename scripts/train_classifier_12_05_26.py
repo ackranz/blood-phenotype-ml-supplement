@@ -24,7 +24,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from openai import OpenAI
 from pathlib import Path
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import Pipeline as ImbPipeline
@@ -44,12 +43,6 @@ from sklearn.svm import LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.inspection import permutation_importance
 from sklearn.exceptions import UndefinedMetricWarning
-
-from gpt_posthoc_utils import (
-    make_gpt_prompt,
-    parse_gpt_predictions_object,
-    save_gpt_posthoc_outputs,
-)
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -96,7 +89,7 @@ OUTER_SEEDS = [11, 22, 33, 44, 55]  # 5 repeats / seeds
 INNER_N_SPLITS = 2
 INNER_SEED = 42
 
-BASE_OUTPUT_ROOT = f"example_outputs/train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_010"
+BASE_OUTPUT_ROOT = f"example_outputs/train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_011"
 os.makedirs(BASE_OUTPUT_ROOT, exist_ok=True)
 
 # ======================================================
@@ -147,9 +140,7 @@ def run_task(TASK):
     # ======================================================
     protein_data = pd.read_csv(file_path)
 
-    client = OpenAI(
-        api_key="sk-0000"
-    )
+    client = None # OpenAI(api_key="sk-0000")
 
     if TASK == "CTRLV_VS_NULLV":
         df = protein_data[protein_data["Phenotype"].isin(["CtrlV", "NullV"])].copy()
@@ -684,6 +675,12 @@ def run_task(TASK):
     # GPT-5 BASELINE ON THE SAME OUTER SPLITS
     # ======================================================
     if USE_GPT:
+        from openai import OpenAI
+        from gpt_posthoc_utils import (
+            make_gpt_prompt,
+            parse_gpt_predictions_object,
+            save_gpt_posthoc_outputs,
+        )
         gpt_name = "GPT-5 (few-shot)"
 
         acc_te, prec_te, rec_te, f1_te, f1m_te, bal_te = ([] for _ in range(6))
