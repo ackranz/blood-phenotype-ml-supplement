@@ -43,6 +43,7 @@ from sklearn.svm import LinearSVC
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.inspection import permutation_importance
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.model_selection import StratifiedKFold
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -76,20 +77,21 @@ def collapse_phenotype(phenotype: str) -> str:
 # ======================================================
 # GLOBAL CONFIG
 # ======================================================
+# GPT baseline is disabled in this release.
 USE_GPT = False
 file_path = "../merged_variant_data_78_a.csv"
 
 TASKS_TO_RUN = [
-    "CTRLV_VS_AG",
+    #"CTRLV_VS_AG",
     "CTRLV_VS_NULLV",
 ]
 
 OUTER_N_SPLITS = 3
-OUTER_SEEDS = [11, 22, 33, 44, 55]  # 5 repeats / seeds
+OUTER_SEEDS = [11, 22, 33, 44, 55]  # 5 repeats / seeds [42 ]#
 INNER_N_SPLITS = 2
 INNER_SEED = 42
 
-BASE_OUTPUT_ROOT = f"example_outputs/train_features_grouped_repeated_5x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_011"
+BASE_OUTPUT_ROOT = f"example_outputs/train_features_grouped_repeated_{len(OUTER_SEEDS)}x{OUTER_N_SPLITS}x{INNER_N_SPLITS}_old_grid_undersampling_ablation_withoutMissense_22"
 os.makedirs(BASE_OUTPUT_ROOT, exist_ok=True)
 
 # ======================================================
@@ -140,7 +142,7 @@ def run_task(TASK):
     # ======================================================
     protein_data = pd.read_csv(file_path)
 
-    client = None # OpenAI(api_key="sk-0000")
+    client = None
 
     if TASK == "CTRLV_VS_NULLV":
         df = protein_data[protein_data["Phenotype"].isin(["CtrlV", "NullV"])].copy()
@@ -302,66 +304,49 @@ def run_task(TASK):
         ),
         "Logistic Regression": make_pipeline(
             LogisticRegression(max_iter=1000, random_state=42),
-            do_undersample=False
+            do_undersample=True
         ),
         "Random Forest": make_pipeline(
             RandomForestClassifier(n_estimators=100, random_state=42),
-            do_undersample=False
+            do_undersample=True
         ),
         "Gradient Boosting": make_pipeline(
             GradientBoostingClassifier(random_state=42),
-            do_undersample=False
+            do_undersample=True
         ),
         "Support Vector Machine": make_pipeline(
             LinearSVC(random_state=42),
-            do_undersample=False
+            do_undersample=True
         ),
     }
 
     param_grids = {
         "Dummy (Most Frequent)": {},
         "Logistic Regression": {
-            "clf__C": [0.001, 0.01, 0.1, 1],  # "clf__C": [0.01, 0.1, 1, 10, 100],
+            "clf__C": [0.001, 0.01, 0.1, 1],
             "clf__solver": ["liblinear", "lbfgs"],
             "clf__penalty": ["l2"],
             "clf__class_weight": [None, "balanced"],
         },
-        "Random Forest": {
+
+         "Random Forest": {
             "clf__n_estimators": [200, 500],
-            "clf__max_depth": [3, 5, 8],  # 10
-            "clf__min_samples_split": [5, 10, 20],
-            "clf__min_samples_leaf": [2, 4, 8],
-            "clf__max_features": ["sqrt"],
-            "clf__class_weight": ["balanced", "balanced_subsample"],
-        },
-        # "Random Forest": {
-        #    "clf__n_estimators": [200, 500],
-        #    "clf__max_depth": [None, 5, 10, 20],
-        #    "clf__min_samples_split": [2, 5, 10],
-        #    "clf__min_samples_leaf": [1, 2, 4],
-        #    "clf__max_features": ["sqrt", "log2", None],
-        #    "clf__class_weight": [None, "balanced", "balanced_subsample"],
-        # },
-        # "Gradient Boosting": {
-        #    "clf__n_estimators": [100, 200, 500],
-        #    "clf__learning_rate": [0.01, 0.05, 0.1, 0.2],
-        #    "clf__max_depth": [1, 2, 3],
-        #    "clf__subsample": [0.6, 0.8, 1.0],
-        # },
-        "Gradient Boosting": {
-            "clf__n_estimators": [50, 100, 200],
-            "clf__learning_rate": [0.01, 0.05],
-            # "clf__n_estimators": [100, 200],
-            # "clf__learning_rate": [0.01, 0.05, 0.1],
-            "clf__max_depth": [1, 2],
-            "clf__subsample": [0.6, 0.8],
-        },
+            "clf__max_depth": [None, 5, 10, 20],
+            "clf__min_samples_split": [2, 5, 10],
+            "clf__min_samples_leaf": [1, 2, 4],
+            "clf__max_features": ["sqrt", "log2", None],
+            "clf__class_weight": [None, "balanced", "balanced_subsample"],
+         },
+         "Gradient Boosting": {
+            "clf__n_estimators": [100, 200, 500],
+            "clf__learning_rate": [0.01, 0.05, 0.1, 0.2],
+            "clf__max_depth": [1, 2, 3],
+            "clf__subsample": [0.6, 0.8, 1.0],
+         },
+
         "Support Vector Machine": {
-            #"clf__C": [0.001, 0.01, 0.1, 1],
             "clf__C": [0.01, 0.1, 1, 10, 100],
-            # "clf__estimator__C": [0.01, 0.1, 1, 10, 100],
             "clf__class_weight": [None, "balanced"],
-            # "clf__estimator__class_weight": [None, "balanced"],
         },
     }
 
@@ -1165,7 +1150,7 @@ def run_task(TASK):
     gb_imp_df = pd.DataFrame({"Feature": features, "Importance": gb_importances}).sort_values("Importance",
                                                                                               ascending=False)
     gb_imp_df.to_csv(os.path.join(output_dir, "feature_importance_gb.csv"), index=False)
-
+    """
     expl_gb = shap.TreeExplainer(gb_model)
     sv_gb = expl_gb.shap_values(X_gb_proc)
     sv_list_gb = sv_gb if isinstance(sv_gb, list) else [sv_gb]
@@ -1184,7 +1169,7 @@ def run_task(TASK):
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "shap_gb_beeswarm.png"), dpi=300)
     plt.close()
-
+    """
     # --- Logistic Regression ---
     lr_pipe = classifiers["Logistic Regression"]
     lr_grid = param_grids["Logistic Regression"]
@@ -1213,7 +1198,7 @@ def run_task(TASK):
         .sort_values("Importance", ascending=False)
     )
     lr_imp_df.to_csv(os.path.join(output_dir, "feature_importance_lr_coef_abs.csv"), index=False)
-
+    """
     expl_lr = shap.LinearExplainer(lr_model, X_lr_proc)
     sv_lr = expl_lr.shap_values(X_lr_proc)
     sv_list_lr = sv_lr if isinstance(sv_lr, list) else [sv_lr]
@@ -1232,7 +1217,7 @@ def run_task(TASK):
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "shap_lr_beeswarm.png"), dpi=300)
     plt.close()
-
+    """
     perm = permutation_importance(
         best_lr, X, y,
         scoring="f1_macro",
